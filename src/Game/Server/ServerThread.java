@@ -80,7 +80,7 @@ public class ServerThread extends Thread {
                     + "Em qualquer momento, pode introduzir \"Desisto\" para sair do jogo");
 
 
-            while(true){
+            while(Server.WINNER_USERNAME == null){
 
                 if (Server.GAME_ENDED) {
                     System.out.println("Thread servidor " + this.getName() + ": O jogo terminou.");
