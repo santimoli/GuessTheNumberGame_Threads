@@ -18,19 +18,6 @@ public class ServerThread extends Thread {
 
         phaser.register();
     }
-    private boolean IsLogIn(String username, String password){
-        for(String[] user : Server.users){
-            if(user[0].equals(username) && user[1].equals(password)){
-                if(user[2].equals("1")){
-                    return true;
-                }
-                if(user[2].equals("0")){
-                    return false;
-                }
-            }
-        }
-        return false;
-    }
 
     public void run() {
         try (
@@ -42,6 +29,7 @@ public class ServerThread extends Thread {
             String username = null, password;
             boolean loggedIn= false;
             int attempts = 3;
+
             while (attempts>0 && !loggedIn) {
                 System.out.println("Thread servidor " + this.threadId() + " À espera do username do novo cliente");
                 username = in.readLine();
@@ -67,6 +55,7 @@ public class ServerThread extends Thread {
             }
             if(!loggedIn){
                 out.println("Número de tentativas: " + attempts + ".");
+                phaser.arriveAndDeregister();
                 return;
             }
             out.println("Por favor, aguarde até terminar o tempo para a entrada de novos jogadores");
@@ -83,14 +72,14 @@ public class ServerThread extends Thread {
             while(Server.WINNER_USERNAME == null){
 
                 if (Server.GAME_ENDED) {
-                    System.out.println("Thread servidor " + this.getName() + ": O jogo terminou.");
+                    System.out.println("Thread servidor " + this.threadId() + ": O jogo terminou.");
                     out.println("Sair");
                     break;
                 }
                 String text = in.readLine();
                 if(text.equalsIgnoreCase("Desisto")){
-                    System.out.println("Thread servidor " +this.getName() + ": O utilizador " + username + " desistiu do jogo");
-                    System.out.println("Thread servidor " +this.getName() + "terminou para o utilizador " + username);
+                    System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " desistiu do jogo");
+                    System.out.println("Thread servidor " + this.threadId() + ": terminou para o utilizador " + username);
                     break;
                 }
 
@@ -101,31 +90,45 @@ public class ServerThread extends Thread {
                     out.println("[SERVER] Valor inválido. Tente novamente.");
                     continue;
                 }
-                System.out.println("O utilizador " + username + "enviou " + NumberPlayer);
+                System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou " + NumberPlayer);
 
                 if(NumberPlayer==Server.EXTRACTED_WINNER_NUMBER){
                     out.println("Parabéns, acertou no número");
-                    System.out.println("O utilizador " + username + "acertou no numero");
-                    Server.GAME_ENDED = true;
-                    Server.WINNER_USERNAME=username;
-                    System.out.println("Thread servidor: " + this.getName() + "terminou para o utilizador " + username);
+                    System.out.println("O utilizador " + username + " acertou no numero");
+                    Server.setGameWinner(username);
+                    System.out.println("Thread servidor: " + this.threadId() + " terminou para o utilizador " + username);
+                    phaser.arriveAndDeregister();
                     break;
                 }else if( NumberPlayer > Server.EXTRACTED_WINNER_NUMBER){
-                    System.out.println("Thread servidor: " + this.getName() + "O utilizador " + username + " enviou o numero " + NumberPlayer +
+                    System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer +
                             " que é superior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
                     out.println("O número " + NumberPlayer + " é superior ao número a adivinhar");
                 } else if (NumberPlayer < Server.EXTRACTED_WINNER_NUMBER) {
-                    System.out.println("Thread servidor: " + this.getName() + "O utilizador " + username + " enviou o numero " + NumberPlayer +
+                    System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer +
                             " que é inferior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
                     out.println("O número " + NumberPlayer + " é inferior ao número a adivinhar");
                 }
             }
-            phaser.arriveAndAwaitAdvance();
+            //phaser.arriveAndAwaitAdvance();
+            phaser.arriveAndDeregister();
 
         } catch (IOException e) {
-            System.err.println("Thread servidor " + this.getName() + ": Erro de criação dos buffers do socket");
+            System.err.println("Thread servidor " + this.threadId() + ": Erro de criação dos buffers do socket");
             phaser.arriveAndDeregister();
-            System.exit(3);
         }
     }
+    private boolean IsLogIn(String username, String password){
+        for(String[] user : Server.users){
+            if(user[0].equals(username) && user[1].equals(password)){
+                if(user[2].equals("1")){
+                    return true;
+                }
+                if(user[2].equals("0")){
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
 }
