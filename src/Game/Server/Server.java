@@ -18,17 +18,13 @@ import java.util.concurrent.*;
 
 public class Server {
     private final static int N_THREADS = 10;
-    private final static int SOCKET_TIMEOUT = 20000;
+    private final static int SOCKET_TIMEOUT = 30000;
     private final static Phaser Phaser = new Phaser();
     private static final Semaphore Semaphore = new Semaphore(0);
     public static volatile int EXTRACTED_WINNER_NUMBER;
     public static int MIN;
     public static int MAX;
     private static final int PORT = 6000;
-    public static boolean ALREADY_LOGGED_IN =false;
-    public static boolean SUCCESS_LOGIN =false;
-    public static boolean ERROR_LOGIN =false;
-    public static boolean NO_ATTEMPTS =false;
     private final static int MAX_TIME_GAME=120;
     public static volatile boolean GAME_ENDED=false;
     public static volatile String WINNER_USERNAME = null;
@@ -65,6 +61,9 @@ public class Server {
 
                 }catch(SocketTimeoutException e){
                     System.out.println("Main: Acabou o tempo para entrar no jogo");
+                    EXTRACTED_WINNER_NUMBER = new Random().nextInt(MAX - MIN + 1) + MIN;
+                    //EXTRACTED_WINNER_NUMBER= new Random().nextInt(MIN,MAX);
+                    System.out.println("Main: número a adivinhar gerado");
                     Semaphore.release(n_Players);
 
                     // Necessário para funcionar o awaitTermination abaixo
@@ -78,9 +77,7 @@ public class Server {
                 executor.shutdownNow();
                 return;
             }
-            EXTRACTED_WINNER_NUMBER= new Random().nextInt(MIN,MAX);
-            System.out.println("Main: número a adivinhar gerado");
-            // EXTRACTED_WINNER_NUMBER = new Random().nextInt(max - min + 1) + min;
+            //Estava aqui a extrair o número;
 
             if(!executor.awaitTermination(MAX_TIME_GAME, TimeUnit.SECONDS)){
                 GAME_ENDED=true;
@@ -156,7 +153,18 @@ public class Server {
     }
     public static synchronized boolean isAlreadyLoggedIn(String username){
         for(String[] user : users){
-            return (user[0].equals(username) && user[2].equals("1"));
+            if(user[0].equals(username)) {
+                return user[2].equals("1");
+            }
+        }
+        return false;
+    }
+
+    public static synchronized boolean setGameWinner(String username) {
+        if (WINNER_USERNAME == null && !GAME_ENDED) {
+            WINNER_USERNAME = username;
+            GAME_ENDED = true;
+            return true;
         }
         return false;
     }

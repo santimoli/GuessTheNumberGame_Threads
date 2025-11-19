@@ -10,7 +10,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.SQLOutput;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
@@ -72,15 +71,23 @@ public class Player {
             while(true){
 
                 String NumberPlayer;
-                int ExtratedNumber = Integer.parseInt(in.readLine());
                 System.out.println("Por favor introduza o seu palpite: ");
                 NumberPlayer = sc.nextLine();
                 out.println(NumberPlayer);
+
                 String ResponseServer= in.readLine();
                 if(ResponseServer == null)break;
                 System.out.println(ResponseServer);
 
+                if (ResponseServer.contains("Parabéns") ||
+                        ResponseServer.contains("acertou no número") ||
+                        ResponseServer.contains("Sair") ||
+                        ResponseServer.equalsIgnoreCase("Desisto") ||
+                        NumberPlayer.equalsIgnoreCase("Desisto") ||
+                        ResponseServer.equalsIgnoreCase("O tempo do jogo terminou, não houve vencedor.")){
 
+                    break;
+                }
 
             }
 
