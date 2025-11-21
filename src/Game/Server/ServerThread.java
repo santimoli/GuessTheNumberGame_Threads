@@ -1,5 +1,7 @@
 package Game.Server;
 
+import Game.UsersUtils.ManipulateFile;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.Phaser;
@@ -31,24 +33,27 @@ public class ServerThread extends Thread {
             int attempts = 3;
 
             while (attempts>0 && !loggedIn) {
-                System.out.println("Thread servidor " + this.threadId() + " À espera do username do novo cliente");
+                System.out.println("Thread servidor " + this.threadId() + " :À espera do username do novo cliente");
                 username = in.readLine();
                 if(username==null) return;
-                System.out.println("Thread servidor "+ this.threadId() + " À espera da password do novo cliente");
+                System.out.println("Thread servidor "+ this.threadId() + " :À espera da password do novo cliente");
                 password= in.readLine();
                 if(password==null) return;
+                
+                int userLogin = ManipulateFile.validateLogin(username, password);
 
-                if(Server.isAlreadyLoggedIn(username)){
-                    System.out.println("Thread servidor " + this.threadId() + ": Login falhado, o utilizador " + username + " já efetuou login anteriormente");
+                if(userLogin==Server.LOGIN_ALREADY_LOGGED){
+                    System.out.println("Thread servidor " + this.threadId() + " :Login falhado, o utilizador " + username + " já efetuou login anteriormente");
                     out.println("Já efetuou Login no jogo anteriormente");
-                    return;
+                    //attempts--;
+                    //continue;
+                    return;// deve termina a thread , ou volta a pedir login?
                 }
-                if(Server.validateLogin(username, password)){
+                else if(userLogin==Server.LOGIN_SUCCESS){
                     System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " efetuou login com sucesso.");
                     out.println("Login efetuado com sucesso");
-                    Server.setUserLoggedIn(username,true);
                     loggedIn=true;
-                }else {
+                }else { // userLogin==-1
                     System.out.println("Thread servidor " + this.threadId() + ": Login falhado (palavra-passe ou username errado) para o utilizador " + username);
                     out.println("Nome de utilizador ou palavra passe errada");
                     attempts--;
@@ -89,7 +94,11 @@ public class ServerThread extends Thread {
                 if(text.equalsIgnoreCase("Desisto")){
                     System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " desistiu do jogo");
                     System.out.println("Thread servidor " + this.threadId() + ": terminou para o utilizador " + username);
-                    Server.ResetLoginStatus(username);
+                    ManipulateFile.resetLoginStatus(username);
+                    if(Server.WINNER_USERNAME!=null){
+                        out.println("O jogador " + Server.WINNER_USERNAME +
+                                " já acertou no número (" + Server.EXTRACTED_WINNER_NUMBER + ")");
+                    }
                     break;
                 }
 
@@ -116,6 +125,7 @@ public class ServerThread extends Thread {
                         out.println("Parabéns, acertou no número");
                         System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " acertou no numero");
                         System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
+                        ManipulateFile.resetLoginStatus(username);
                         //phaser.arriveAndDeregister();
                         break;
                     }
