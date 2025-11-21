@@ -89,6 +89,7 @@ public class ServerThread extends Thread {
                 if(text.equalsIgnoreCase("Desisto")){
                     System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " desistiu do jogo");
                     System.out.println("Thread servidor " + this.threadId() + ": terminou para o utilizador " + username);
+                    Server.ResetLoginStatus(username);
                     break;
                 }
 
