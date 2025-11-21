@@ -88,6 +88,9 @@ public class Server {
             if (WINNER_USERNAME != null) {
                 System.out.println("Main: O utilizador " + WINNER_USERNAME + " ganhou");
             }
+            else {
+                System.out.println("Main: O jogo terminou sem vencedores");
+            }
 
 
         }catch (IOException e) {
