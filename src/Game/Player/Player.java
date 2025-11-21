@@ -1,9 +1,5 @@
 package Game.Player;
 
-import Game.Server.Server;
-import utils.InputValidation;
-
-import javax.swing.plaf.synth.SynthToggleButtonUI;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,13 +7,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
-import java.util.concurrent.Semaphore;
 
 public class Player {
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         System.out.println("Introduza o valor do servidor ao qual se vai ligar: ");
-        String hostname = sc.nextLine();
+        String hostname = "localhost";
 
 
         int PortNumber = 6000;
