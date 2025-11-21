@@ -74,10 +74,8 @@ public class Player {
                 if(ResponseServer == null)break;
                 System.out.println(ResponseServer);
 
-                if (ResponseServer.contains("Parabéns") ||
-                        ResponseServer.contains("acertou no número") ||
-                        ResponseServer.contains("Sair") ||
-                        ResponseServer.equalsIgnoreCase("Desisto") ||
+                if (ResponseServer.contains("Parabéns") || ResponseServer.contains("acertou no número") ||
+                        ResponseServer.contains("Sair") || ResponseServer.equalsIgnoreCase("Desisto") ||
                         NumberPlayer.equalsIgnoreCase("Desisto") ||
                         ResponseServer.equalsIgnoreCase("O tempo do jogo terminou, não houve vencedor.")){
 
