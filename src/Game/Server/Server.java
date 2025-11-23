@@ -51,9 +51,8 @@ public class Server {
                 try{
                     Socket clientSocket = serverSocket.accept();
                     n_Players++;
-                    System.out.println("Nova ligação");
+                    System.out.println("Main: Nova ligação");
                     executor.execute(new ServerThread(clientSocket,Phaser,Semaphore));
-
 
                 }catch(SocketTimeoutException e){
                     System.out.println("Main: Acabou o tempo para entrar no jogo");
@@ -63,6 +62,8 @@ public class Server {
                     Semaphore.release(n_Players);
 
                     // Necessário para funcionar o awaitTermination abaixo
+                    //Para controlar que todas as threads terminam, qualquer dos dois funcionam. Porque? duvida!
+                    //executor.shutdown();
                     executor.shutdownNow();
                     break;
                 }

@@ -1,9 +1,11 @@
 package Game.Server;
 
 import Game.UsersUtils.ManipulateFile;
+import utils.Messages;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
 
@@ -23,10 +25,10 @@ public class ServerThread extends Thread {
 
     public void run() {
         try (
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+                PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))
 
-                ) {
+        ) {
 
             String username = null, password;
             boolean loggedIn= false;
@@ -35,27 +37,31 @@ public class ServerThread extends Thread {
             while (attempts>0 && !loggedIn) {
                 System.out.println("Thread servidor " + this.threadId() + " :À espera do username do novo cliente");
                 username = in.readLine();
-                if(username==null) return;
+                if (username == null) {
+                    phaser.arriveAndDeregister();
+                    return;
+                }
                 System.out.println("Thread servidor "+ this.threadId() + " :À espera da password do novo cliente");
                 password= in.readLine();
-                if(password==null) return;
-                
+                if (password == null) {
+                    phaser.arriveAndDeregister();
+                    return;
+                }
+
                 int userLogin = ManipulateFile.validateLogin(username, password);
 
-                if(userLogin==Server.LOGIN_ALREADY_LOGGED){
+
+                if (userLogin == Server.LOGIN_ALREADY_LOGGED) {
                     System.out.println("Thread servidor " + this.threadId() + " :Login falhado, o utilizador " + username + " já efetuou login anteriormente");
-                    out.println("Já efetuou Login no jogo anteriormente");
-                    //attempts--;
-                    //continue;
-                    return;// deve termina a thread , ou volta a pedir login?
-                }
-                else if(userLogin==Server.LOGIN_SUCCESS){
+                    out.println(Messages.LOGIN_ALREADY_LOGGED.getText());
+                    return;
+                } else if (userLogin == Server.LOGIN_SUCCESS) {
                     System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " efetuou login com sucesso.");
-                    out.println("Login efetuado com sucesso");
-                    loggedIn=true;
-                }else { // userLogin==-1
+                    out.println(Messages.LOGIN_SUCCESS.getText());
+                    loggedIn = true;
+                } else {
                     System.out.println("Thread servidor " + this.threadId() + ": Login falhado (palavra-passe ou username errado) para o utilizador " + username);
-                    out.println("Nome de utilizador ou palavra passe errada");
+                    out.println(Messages.LOGIN_FAILED.getText());
                     attempts--;
                 }
             }
@@ -64,7 +70,7 @@ public class ServerThread extends Thread {
                 phaser.arriveAndDeregister();
                 return;
             }
-            out.println("Por favor, aguarde até terminar o tempo para a entrada de novos jogadores");
+            out.println(Messages.GAME_START.getText());
             try {
                 semaphore.acquire();
             }catch (InterruptedException ignored){
@@ -79,68 +85,72 @@ public class ServerThread extends Thread {
                 out.println("Sair");
             }
 
-            while(!Server.GAME_ENDED && Server.WINNER_USERNAME==null){
 
-                String text = in.readLine();
-                if(text==null) break;
-
-                if(Server.GAME_ENDED){
-                    if(Server.WINNER_USERNAME==null){
-                        out.println("O tempo do jogo terminou, não houve vencedor.");
-                    }
-                    break;
-                }
-
-                if(text.equalsIgnoreCase("Desisto")){
-                    System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " desistiu do jogo");
-                    System.out.println("Thread servidor " + this.threadId() + ": terminou para o utilizador " + username);
-                    ManipulateFile.resetLoginStatus(username);
-                    if(Server.WINNER_USERNAME!=null){
-                        out.println("O jogador " + Server.WINNER_USERNAME +
-                                " já acertou no número (" + Server.EXTRACTED_WINNER_NUMBER + ")");
-                    }
-                    break;
-                }
-
-                if(Server.WINNER_USERNAME!=null){
-                    out.println("O jogador " + Server.WINNER_USERNAME +
-                            " já acertou no número (" + Server.EXTRACTED_WINNER_NUMBER + ")");
-                    break;
-                }
-
-
-                int NumberPlayer;
+            while (!Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
                 try {
-                    NumberPlayer = Integer.parseInt(text);
-                } catch (NumberFormatException e) {
-                    out.println("Valor inválido. Tente novamente.");
-                    continue;
-                }
-                System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou " + NumberPlayer);
+                    String input = in.readLine();         // <-- nova tentativa do jogador
+                    if (input == null) break;
 
-
-                if(NumberPlayer==Server.EXTRACTED_WINNER_NUMBER){
-
-                    if(Server.setGameWinner(username)){
-                        out.println("Parabéns, acertou no número");
-                        System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " acertou no numero");
-                        System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
-                        ManipulateFile.resetLoginStatus(username);
-                        //phaser.arriveAndDeregister();
+                    // Se o jogo já terminou por tempo e não há vencedor, avisar **agora** (em resposta à tentativa)
+                    if (Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
+                        out.println("O tempo do jogo terminou"); // ou Messages.GAME_ENDED_NO_WINNER.getText()
                         break;
                     }
 
-                }else if( NumberPlayer > Server.EXTRACTED_WINNER_NUMBER){
-                    System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer +
-                            " que é superior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
-                    out.println("O número " + NumberPlayer + " é superior ao número a adivinhar");
-                }else{
-                    System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer +
-                            " que é inferior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
-                    out.println("O número " + NumberPlayer + " é inferior ao número a adivinhar");
+                    // Se já há vencedor, informar e terminar
+                    if (Server.WINNER_USERNAME != null) {
+                        if (!Server.WINNER_USERNAME.equals(username)) {
+                            out.println(String.format("O jogador %s já acertou no número (%d). O jogo terminou.",
+                                    Server.WINNER_USERNAME, Server.EXTRACTED_WINNER_NUMBER));
+                        }
+                        break;
+                    }
+
+                    if (input.equalsIgnoreCase("Desisto")) {
+                        System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " desistiu do jogo");
+                        System.out.println("Thread servidor " + this.threadId() + ": terminou para o utilizador " + username);
+                        ManipulateFile.resetLoginStatus(username);
+                        if (Server.WINNER_USERNAME != null) {
+                            out.println(String.format("O jogador %s já acertou no número (%d). O jogo terminou.",
+                                    Server.WINNER_USERNAME, Server.EXTRACTED_WINNER_NUMBER));
+                        }
+                        break;
+                    }
+
+                    int NumberPlayer;
+                    try { NumberPlayer = Integer.parseInt(input); }
+                    catch (NumberFormatException e) {
+                        out.println("Valor inválido. Tente novamente.");
+                        continue;
+                    }
+
+                    System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou " + NumberPlayer);
+
+                    if (NumberPlayer == Server.EXTRACTED_WINNER_NUMBER) {
+                        if (Server.setGameWinner(username)) {
+                            out.println(Messages.GAME_WON.getText());
+                            System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " acertou no numero");
+                            System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
+                            ManipulateFile.resetLoginStatus(username);
+                            break;
+                        }
+                    } else if (NumberPlayer > Server.EXTRACTED_WINNER_NUMBER) {
+                        System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer
+                                + " que é superior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
+                        out.println(Messages.NUMBER_TOO_HIGH.format(NumberPlayer));
+                    } else {
+                        System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " enviou o numero " + NumberPlayer
+                                + " que é inferior ao número a adivinhar (" + Server.EXTRACTED_WINNER_NUMBER + ")");
+                        out.println(Messages.NUMBER_TOO_LOW.format(NumberPlayer));
+                    }
+                } catch (SocketTimeoutException ste) {
+                    // Sem nova tentativa: se o jogo já terminou por tempo, fechar silenciosamente.
+                    if (Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
+                        break; // não enviar aviso aqui; requisito: apenas em resposta a nova tentativa
+                    }
+                    // caso contrário, continua a esperar por input
                 }
             }
-            //phaser.arriveAndAwaitAdvance();
             phaser.arriveAndDeregister();
 
         } catch (IOException e) {

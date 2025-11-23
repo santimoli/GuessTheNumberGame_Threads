@@ -1,5 +1,7 @@
 package Game.Player;
 
+import utils.Messages;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,78 +12,113 @@ import java.util.Scanner;
 
 public class Player {
     public static void main(String[] args) {
-        Scanner sc=new Scanner(System.in);
-        System.out.println("Introduza o valor do servidor ao qual se vai ligar: ");
+        Scanner sc = new Scanner(System.in);
         String hostname = "localhost";
-
-
         int PortNumber = 6000;
-        try(
+
+        try (
                 Socket clientSocket = new Socket(hostname, PortNumber);
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                ){
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+        ) {
 
-
-            int Attempts=3;
-            boolean loggedIn=false;
-            while (Attempts>0){
+            int Attempts = 3;
+            while (Attempts > 0) {
 
                 System.out.println("Username:> ");
                 String username = sc.nextLine();
                 out.println(username);
+
                 System.out.println("Password:> ");
                 String password = sc.nextLine();
                 out.println(password);
 
                 String logStatus = in.readLine();
-                System.out.println(logStatus);
-
-
-
-                if(logStatus.equalsIgnoreCase("Já efetuou Login no jogo anteriormente")){
+                if (logStatus == null) {
+                    System.out.println("Servidor terminou ligação.");
                     return;
                 }
-                if(logStatus.equalsIgnoreCase("Login efetuado com sucesso")){
-                    loggedIn=true;
+
+                System.out.println(logStatus);
+
+                if (logStatus.equalsIgnoreCase(Messages.LOGIN_ALREADY_LOGGED.getText())) {
+                    return;
+                }
+
+                if (logStatus.equalsIgnoreCase(Messages.LOGIN_SUCCESS.getText())) {
                     break;
                 }
-                if (logStatus.equals("Nome de utilizador ou palavra passe errada")) {
+
+                if (logStatus.equalsIgnoreCase(Messages.LOGIN_FAILED.getText())) {
                     Attempts--;
+                    System.out.println("Tentativas restantes: " + Attempts);
                     if (Attempts == 0) {
                         System.out.println("Demasiadas tentativas. Ligação encerrada.");
                         return;
                     }
-                    System.out.println("Tentativas restantes: " + Attempts);
                 }
             }
 
-            String messageServer;
-            messageServer=in.readLine();
-            System.out.println(messageServer);
+            // Ler mensagens iniciais do servidor (podem ser 1 ou mais)
+            while (true) {
+                String initialMsg = in.readLine();
+                if (initialMsg == null) {
+                    System.out.println("Servidor terminou a ligação.");
+                    return;
+                }
 
-            String rulesServer= in.readLine();
-            System.out.println(rulesServer);
+                System.out.println(initialMsg);
 
-            while(true){
+                // Parar se já for mensagem de fim de jogo
+                if (initialMsg.contains("já acertou") ||
+                        initialMsg.equalsIgnoreCase("Sair") ||
+                        initialMsg.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText())) {
+                    return;
+                }
 
-                String NumberPlayer;
+                // Quando recebe a descrição do intervalo, parar de ler mensagens iniciais
+                if (initialMsg.startsWith("O numero a adivinhar está entre"))
+                    break;
+            }
+
+            // Loop principal do jogo
+            while (true) {
+
                 System.out.println("Por favor introduza o seu palpite: ");
-                NumberPlayer = sc.nextLine();
-                out.println(NumberPlayer);
-
-                String ResponseServer= in.readLine();
-                if(ResponseServer == null)break;
-                System.out.println(ResponseServer);
-
-                if (ResponseServer.contains("Parabéns") || ResponseServer.contains("acertou no número") ||
-                        ResponseServer.contains("Sair") || ResponseServer.equalsIgnoreCase("Desisto") ||
-                        NumberPlayer.equalsIgnoreCase("Desisto") ||
-                        ResponseServer.equalsIgnoreCase("O tempo do jogo terminou, não houve vencedor.")){
-
+                String NumberPlayer = sc.nextLine();
+                try {
+                    out.println(NumberPlayer);
+                } catch (Exception e) {
+                    System.out.println("Não foi possível enviar o palpite. Encerrando cliente.");
                     break;
                 }
 
+                // Se o jogador desistiu, basta ler UMA resposta
+                if (NumberPlayer.equalsIgnoreCase("Desisto")) {
+                    String response = in.readLine();
+                    if (response != null) {
+                        System.out.println(response);
+                    }
+                    break;
+                }
+
+                String ResponseServer = in.readLine();
+                if (ResponseServer == null) {
+                    System.out.println("Servidor terminou a ligação.");
+                    break;
+                }
+
+                System.out.println(ResponseServer);
+
+                // Condições de fim de jogo
+                if (ResponseServer.contains("já acertou") ||
+                        ResponseServer.equalsIgnoreCase(Messages.GAME_WON.getText()) ||
+                        ResponseServer.equalsIgnoreCase(Messages.EXIT.getText()) ||
+                        ResponseServer.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText()) ||
+                        ResponseServer.contains("tempo do jogo terminou")) {  // Adicionar esta verificação
+                        //ResponseServer.equalsIgnoreCase("O tempo do jogo terminou")) Sera necessaria esta linha?
+                    break;
+                }
             }
 
         } catch (UnknownHostException e) {
@@ -91,6 +128,7 @@ public class Player {
             System.err.println("Erro de IO");
             System.exit(3);
         }
+
         sc.close();
     }
 }
