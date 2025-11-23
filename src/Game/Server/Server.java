@@ -21,11 +21,11 @@ public class Server {
     public static int MIN;
     public static int MAX;
     private static final int PORT = 6000;
-    private final static int MAX_TIME_GAME=120;
-    public static volatile boolean GAME_ENDED=false;
+    private final static int MAX_TIME_GAME = 120;
+    public static volatile boolean GAME_ENDED = false;
     public static volatile String WINNER_USERNAME = null;
-    public static final int LOGIN_SUCCESS=1;
-    public static final int LOGIN_ALREADY_LOGGED=0;
+    public static final int LOGIN_SUCCESS = 1;
+    public static final int LOGIN_ALREADY_LOGGED = 0;
 
 
     public static void main(String[] args) {
@@ -35,26 +35,24 @@ public class Server {
 
         int n_Players = 0;
 
-        MIN=InputValidation.validateIntGE0(sc,"Main: Por favor, introduza o valor mínimo a ser indicado aos utilizadores:> ");
-        MAX=InputValidation.validateIntGTN(sc,"Main: Por favor, introduza o valor máximo a ser indicado aos utilizadores:> ",MIN);
+        MIN = InputValidation.validateIntGE0(sc, "Main: Por favor, introduza o valor mínimo a ser indicado aos utilizadores:> ");
+        MAX = InputValidation.validateIntGTN(sc, "Main: Por favor, introduza o valor máximo a ser indicado aos utilizadores:> ", MIN);
 
 
-
-        try(
+        try (
                 ServerSocket serverSocket = new ServerSocket(PORT);
                 ExecutorService executor = Executors.newFixedThreadPool(N_THREADS);
-                )
-        {
+        ) {
             serverSocket.setSoTimeout(SOCKET_TIMEOUT);
-            while(true) {
+            while (true) {
                 System.out.println("Main: À espera de ligações....");
-                try{
+                try {
                     Socket clientSocket = serverSocket.accept();
                     n_Players++;
                     System.out.println("Main: Nova ligação");
-                    executor.execute(new ServerThread(clientSocket,Phaser,Semaphore));
+                    executor.execute(new ServerThread(clientSocket, Phaser, Semaphore));
 
-                }catch(SocketTimeoutException e){
+                } catch (SocketTimeoutException e) {
                     System.out.println("Main: Acabou o tempo para entrar no jogo");
                     EXTRACTED_WINNER_NUMBER = new Random().nextInt(MAX - MIN + 1) + MIN;
                     //EXTRACTED_WINNER_NUMBER= new Random().nextInt(MIN,MAX);
@@ -69,17 +67,17 @@ public class Server {
                 }
 
             }
-            if(n_Players==0){
+            if (n_Players == 0) {
                 System.out.println("Main: Nenhum jogador entrou. A encerrar.");
                 executor.shutdownNow();
                 return;
             }
             //Estava aqui a extrair o número;
 
-            if(!executor.awaitTermination(MAX_TIME_GAME, TimeUnit.SECONDS)){
-                GAME_ENDED=true;
+            if (!executor.awaitTermination(MAX_TIME_GAME, TimeUnit.SECONDS)) {
+                GAME_ENDED = true;
                 System.out.println("Main: O tempo do jogo terminou");
-                if(WINNER_USERNAME==null){
+                if (WINNER_USERNAME == null) {
                     System.out.println("Main: Não houve vencedores");
                 }
                 executor.shutdownNow();
@@ -90,7 +88,7 @@ public class Server {
             }
 
 
-        }catch (IOException e) {
+        } catch (IOException e) {
             System.err.println("Main: Ocorreu um erro de I/O ao tentar criar o socket no porto " + PORT);
             System.exit(2);
         } catch (InterruptedException e) {

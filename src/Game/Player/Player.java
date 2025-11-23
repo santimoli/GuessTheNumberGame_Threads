@@ -116,7 +116,7 @@ public class Player {
                         ResponseServer.equalsIgnoreCase(Messages.EXIT.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText()) ||
                         ResponseServer.contains("tempo do jogo terminou")) {  // Adicionar esta verificação
-                        //ResponseServer.equalsIgnoreCase("O tempo do jogo terminou")) Sera necessaria esta linha?
+                    //ResponseServer.equalsIgnoreCase("O tempo do jogo terminou")) Sera necessaria esta linha?
                     break;
                 }
             }

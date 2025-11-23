@@ -31,18 +31,18 @@ public class ServerThread extends Thread {
         ) {
 
             String username = null, password;
-            boolean loggedIn= false;
+            boolean loggedIn = false;
             int attempts = 3;
 
-            while (attempts>0 && !loggedIn) {
+            while (attempts > 0 && !loggedIn) {
                 System.out.println("Thread servidor " + this.threadId() + " :À espera do username do novo cliente");
                 username = in.readLine();
                 if (username == null) {
                     phaser.arriveAndDeregister();
                     return;
                 }
-                System.out.println("Thread servidor "+ this.threadId() + " :À espera da password do novo cliente");
-                password= in.readLine();
+                System.out.println("Thread servidor " + this.threadId() + " :À espera da password do novo cliente");
+                password = in.readLine();
                 if (password == null) {
                     phaser.arriveAndDeregister();
                     return;
@@ -65,7 +65,7 @@ public class ServerThread extends Thread {
                     attempts--;
                 }
             }
-            if(!loggedIn){
+            if (!loggedIn) {
                 out.println("Número de tentativas: " + attempts + ".");
                 phaser.arriveAndDeregister();
                 return;
@@ -73,10 +73,10 @@ public class ServerThread extends Thread {
             out.println(Messages.GAME_START.getText());
             try {
                 semaphore.acquire();
-            }catch (InterruptedException ignored){
+            } catch (InterruptedException ignored) {
             }
             System.out.println("Thread servidor " + this.threadId() + " :O utilizador " + username + " foi informado que o jogo vai começar");
-            out.println("O numero a adivinhar está entre " + Server.MIN + " e "+ Server.MAX + "." +
+            out.println("O numero a adivinhar está entre " + Server.MIN + " e " + Server.MAX + "." +
                     "Ganha o primeiro utilizador a adivinhar o número "
                     + "Em qualquer momento, pode introduzir \"Desisto\" para sair do jogo");
 
@@ -118,8 +118,9 @@ public class ServerThread extends Thread {
                     }
 
                     int NumberPlayer;
-                    try { NumberPlayer = Integer.parseInt(input); }
-                    catch (NumberFormatException e) {
+                    try {
+                        NumberPlayer = Integer.parseInt(input);
+                    } catch (NumberFormatException e) {
                         out.println("Valor inválido. Tente novamente.");
                         continue;
                     }
