@@ -61,6 +61,7 @@ public class Server {
 
                     // Necessário para funcionar o awaitTermination abaixo
                     //Para controlar que todas as threads terminam, qualquer dos dois funcionam. Porque? duvida!
+                    serverSocket.close();
                     //executor.shutdown();
                     executor.shutdownNow();
                     break;

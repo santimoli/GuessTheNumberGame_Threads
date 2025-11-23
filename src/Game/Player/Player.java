@@ -125,7 +125,11 @@ public class Player {
             System.err.println("Host desconhecido: " + hostname);
             System.exit(2);
         } catch (IOException e) {
-            System.err.println("Erro de IO");
+            if(e instanceof java.net.ConnectException) {
+                System.out.println("Não foi possível ligar ao servidor: já não estão a ser aceites novos jogadores.");
+            }else{
+                System.err.println("Erro de IO");
+            }
             System.exit(3);
         }
 
