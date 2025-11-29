@@ -1,6 +1,6 @@
 package Game.Server;
 
-import Game.UsersUtils.ManipulateFile;
+import utils.ManipulateFile;
 import utils.InputValidation;
 
 import java.io.IOException;
@@ -26,6 +26,7 @@ public class Server {
     public static volatile String WINNER_USERNAME = null;
     public static final int LOGIN_SUCCESS = 1;
     public static final int LOGIN_ALREADY_LOGGED = 0;
+    public static volatile boolean REGISTRATION_CLOSED = false;
 
 
     public static void main(String[] args) {
@@ -54,17 +55,18 @@ public class Server {
 
                 } catch (SocketTimeoutException e) {
                     System.out.println("Main: Acabou o tempo para entrar no jogo");
+                    REGISTRATION_CLOSED = true;
                     EXTRACTED_WINNER_NUMBER = new Random().nextInt(MAX - MIN + 1) + MIN;
                     //EXTRACTED_WINNER_NUMBER= new Random().nextInt(MIN,MAX);
                     System.out.println("Main: número a adivinhar gerado");
                     Semaphore.release(n_Players);
 
-                    // Necessário para funcionar o awaitTermination abaixo
-                    //Para controlar que todas as threads terminam, qualquer dos dois funcionam. Porque? duvida!
                     serverSocket.close();
-                    //executor.shutdown();
                     executor.shutdownNow();
                     break;
+                    // Necessário para funcionar o awaitTermination abaixo
+                    //Para controlar que todas as threads terminam
+                    //executor.shutdown();
                 }
 
             }
@@ -73,7 +75,6 @@ public class Server {
                 executor.shutdownNow();
                 return;
             }
-            //Estava aqui a extrair o número;
 
             if (!executor.awaitTermination(MAX_TIME_GAME, TimeUnit.SECONDS)) {
                 GAME_ENDED = true;

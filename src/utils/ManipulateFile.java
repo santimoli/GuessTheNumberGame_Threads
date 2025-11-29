@@ -1,4 +1,4 @@
-package Game.UsersUtils;
+package utils;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ManipulateFile {
 
-    public static final String fullfilename= System.getProperty("user.dir")+"\\src\\Game\\UsersUtils\\users.txt";
+    public static final String fullfilename= System.getProperty("user.dir")+"\\src\\utils\\users.txt";
     public static List<String[]> users;
 
     public static void initUsers() {

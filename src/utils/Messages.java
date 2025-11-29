@@ -11,8 +11,8 @@ public enum Messages {
     OTHER_PLAYER_WON("já acertou"),
     NUMBER_TOO_HIGH("O número %d é superior ao número a adivinhar"),
     NUMBER_TOO_LOW("O número %d é inferior ao número a adivinhar"),
-    EXIT("Sair");
-
+    EXIT("A sair, o jogo foi finalizado."),
+    ALREADY_STARTED_GAME("O tempo de registo ja finalizou e o jogo já começou.");
 
     private final String text;
 

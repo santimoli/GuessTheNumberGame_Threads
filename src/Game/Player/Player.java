@@ -59,7 +59,6 @@ public class Player {
                 }
             }
 
-            // Ler mensagens iniciais do servidor (podem ser 1 ou mais)
             while (true) {
                 String initialMsg = in.readLine();
                 if (initialMsg == null) {
@@ -69,19 +68,19 @@ public class Player {
 
                 System.out.println(initialMsg);
 
-                // Parar se já for mensagem de fim de jogo
+
                 if (initialMsg.contains("já acertou") ||
                         initialMsg.equalsIgnoreCase("Sair") ||
                         initialMsg.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText())) {
                     return;
                 }
 
-                // Quando recebe a descrição do intervalo, parar de ler mensagens iniciais
+
                 if (initialMsg.startsWith("O numero a adivinhar está entre"))
                     break;
             }
 
-            // Loop principal do jogo
+
             while (true) {
 
                 System.out.println("Por favor introduza o seu palpite: ");
@@ -93,7 +92,7 @@ public class Player {
                     break;
                 }
 
-                // Se o jogador desistiu, basta ler UMA resposta
+
                 if (NumberPlayer.equalsIgnoreCase("Desisto")) {
                     String response = in.readLine();
                     if (response != null) {
@@ -111,12 +110,11 @@ public class Player {
                 System.out.println(ResponseServer);
 
                 // Condições de fim de jogo
-                if (ResponseServer.contains("já acertou") ||
+                if (ResponseServer.contains(Messages.OTHER_PLAYER_WON.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.GAME_WON.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.EXIT.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText()) ||
-                        ResponseServer.contains("tempo do jogo terminou")) {  // Adicionar esta verificação
-                    //ResponseServer.equalsIgnoreCase("O tempo do jogo terminou")) Sera necessaria esta linha?
+                        ResponseServer.equalsIgnoreCase(Messages.ALREADY_STARTED_GAME.getText())) {
                     break;
                 }
             }
@@ -125,10 +123,10 @@ public class Player {
             System.err.println("Host desconhecido: " + hostname);
             System.exit(2);
         } catch (IOException e) {
-            if(e instanceof java.net.ConnectException) {
+            if (e instanceof java.net.ConnectException) {
                 System.out.println("Não foi possível ligar ao servidor: já não estão a ser aceites novos jogadores.");
-            }else{
-                System.err.println("Erro de IO");
+            } else {
+                System.out.println("Erro de comunicação com o servidor. Encerrando jogador.");
             }
             System.exit(3);
         }

@@ -1,6 +1,6 @@
 package Game.Server;
 
-import Game.UsersUtils.ManipulateFile;
+import utils.ManipulateFile;
 import utils.Messages;
 
 import java.io.*;
@@ -25,8 +25,8 @@ public class ServerThread extends Thread {
 
     public void run() {
         try (
-                PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
 
         ) {
 
@@ -50,7 +50,6 @@ public class ServerThread extends Thread {
 
                 int userLogin = ManipulateFile.validateLogin(username, password);
 
-
                 if (userLogin == Server.LOGIN_ALREADY_LOGGED) {
                     System.out.println("Thread servidor " + this.threadId() + " :Login falhado, o utilizador " + username + " já efetuou login anteriormente");
                     out.println(Messages.LOGIN_ALREADY_LOGGED.getText());
@@ -70,6 +69,12 @@ public class ServerThread extends Thread {
                 phaser.arriveAndDeregister();
                 return;
             }
+            if (Server.REGISTRATION_CLOSED) {
+                System.out.println("Thread servidor " + threadId() + ": Tentativa de login após o tempo de registo");
+                out.println("O tempo de registo ja finalizou e jogo já começou.");
+                phaser.arriveAndDeregister();
+                return;
+            }
             out.println(Messages.GAME_START.getText());
             try {
                 semaphore.acquire();
@@ -82,26 +87,33 @@ public class ServerThread extends Thread {
 
             if (Server.GAME_ENDED) {
                 System.out.println("Thread servidor " + this.threadId() + ": O jogo terminou.");
-                out.println("Sair");
+                out.println("A sair, o jogo foi finalizado.");
             }
 
 
             while (!Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
                 try {
-                    String input = in.readLine();         // <-- nova tentativa do jogador
+                    /*
+                    if (Server.REGISTRATION_CLOSED && Server.WINNER_USERNAME != null) {
+                        out.println("Já não é possível entrar no jogo: tempo de registo terminado.");
+                        break;
+                    }*/
+
+                    String input = in.readLine();
                     if (input == null) break;
 
-                    // Se o jogo já terminou por tempo e não há vencedor, avisar **agora** (em resposta à tentativa)
                     if (Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
-                        out.println("O tempo do jogo terminou"); // ou Messages.GAME_ENDED_NO_WINNER.getText()
+                        out.println(Messages.GAME_ENDED_NO_WINNER.getText());
+                        System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
                         break;
                     }
 
-                    // Se já há vencedor, informar e terminar
+
                     if (Server.WINNER_USERNAME != null) {
                         if (!Server.WINNER_USERNAME.equals(username)) {
                             out.println(String.format("O jogador %s já acertou no número (%d). O jogo terminou.",
                                     Server.WINNER_USERNAME, Server.EXTRACTED_WINNER_NUMBER));
+                            System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
                         }
                         break;
                     }
@@ -113,6 +125,7 @@ public class ServerThread extends Thread {
                         if (Server.WINNER_USERNAME != null) {
                             out.println(String.format("O jogador %s já acertou no número (%d). O jogo terminou.",
                                     Server.WINNER_USERNAME, Server.EXTRACTED_WINNER_NUMBER));
+                            System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
                         }
                         break;
                     }
@@ -145,11 +158,11 @@ public class ServerThread extends Thread {
                         out.println(Messages.NUMBER_TOO_LOW.format(NumberPlayer));
                     }
                 } catch (SocketTimeoutException ste) {
-                    // Sem nova tentativa: se o jogo já terminou por tempo, fechar silenciosamente.
+
                     if (Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
-                        break; // não enviar aviso aqui; requisito: apenas em resposta a nova tentativa
+                        break;
                     }
-                    // caso contrário, continua a esperar por input
+
                 }
             }
             phaser.arriveAndDeregister();
