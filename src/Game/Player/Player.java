@@ -42,7 +42,12 @@ public class Player {
                 System.out.println(logStatus);
 
                 if (logStatus.equalsIgnoreCase(Messages.LOGIN_ALREADY_LOGGED.getText())) {
-                    return;
+                    Attempts--;
+                    System.out.println("Tentativas restantes: " + Attempts);
+                    if (Attempts == 0) {
+                        System.out.println("Demasiadas tentativas. Ligação encerrada.");
+                        return;
+                    }
                 }
 
                 if (logStatus.equalsIgnoreCase(Messages.LOGIN_SUCCESS.getText())) {
@@ -68,18 +73,15 @@ public class Player {
 
                 System.out.println(initialMsg);
 
-
                 if (initialMsg.contains("já acertou") ||
                         initialMsg.equalsIgnoreCase("Sair") ||
                         initialMsg.equalsIgnoreCase(Messages.GAME_ENDED_NO_WINNER.getText())) {
                     return;
                 }
 
-
                 if (initialMsg.startsWith("O numero a adivinhar está entre"))
                     break;
             }
-
 
             while (true) {
 
@@ -91,7 +93,6 @@ public class Player {
                     System.out.println("Não foi possível enviar o palpite. Encerrando cliente.");
                     break;
                 }
-
 
                 if (NumberPlayer.equalsIgnoreCase("Desisto")) {
                     String response = in.readLine();
@@ -109,7 +110,6 @@ public class Player {
 
                 System.out.println(ResponseServer);
 
-                // Condições de fim de jogo
                 if (ResponseServer.contains(Messages.OTHER_PLAYER_WON.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.GAME_WON.getText()) ||
                         ResponseServer.equalsIgnoreCase(Messages.EXIT.getText()) ||

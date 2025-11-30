@@ -57,10 +57,8 @@ public class Server {
                     System.out.println("Main: Acabou o tempo para entrar no jogo");
                     REGISTRATION_CLOSED = true;
                     EXTRACTED_WINNER_NUMBER = new Random().nextInt(MAX - MIN + 1) + MIN;
-                    //EXTRACTED_WINNER_NUMBER= new Random().nextInt(MIN,MAX);
                     System.out.println("Main: número a adivinhar gerado");
                     Semaphore.release(n_Players);
-
                     serverSocket.close();
                     executor.shutdownNow();
                     break;
@@ -89,7 +87,6 @@ public class Server {
                 System.out.println("Main: O utilizador " + WINNER_USERNAME + " ganhou");
             }
 
-
         } catch (IOException e) {
             System.err.println("Main: Ocorreu um erro de I/O ao tentar criar o socket no porto " + PORT);
             System.exit(2);
@@ -97,10 +94,7 @@ public class Server {
             System.err.println("Main: Ocorreu um erro em awaitTermination");
             System.exit(3);
         }
-
-
         sc.close();
-
     }
 
     public static synchronized boolean setGameWinner(String username) {

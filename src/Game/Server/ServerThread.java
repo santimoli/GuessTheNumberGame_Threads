@@ -53,7 +53,6 @@ public class ServerThread extends Thread {
                 if (userLogin == Server.LOGIN_ALREADY_LOGGED) {
                     System.out.println("Thread servidor " + this.threadId() + " :Login falhado, o utilizador " + username + " já efetuou login anteriormente");
                     out.println(Messages.LOGIN_ALREADY_LOGGED.getText());
-                    return;
                 } else if (userLogin == Server.LOGIN_SUCCESS) {
                     System.out.println("Thread servidor " + this.threadId() + ": O utilizador " + username + " efetuou login com sucesso.");
                     out.println(Messages.LOGIN_SUCCESS.getText());
@@ -93,12 +92,6 @@ public class ServerThread extends Thread {
 
             while (!Server.GAME_ENDED && Server.WINNER_USERNAME == null) {
                 try {
-                    /*
-                    if (Server.REGISTRATION_CLOSED && Server.WINNER_USERNAME != null) {
-                        out.println("Já não é possível entrar no jogo: tempo de registo terminado.");
-                        break;
-                    }*/
-
                     String input = in.readLine();
                     if (input == null) break;
 
@@ -107,7 +100,6 @@ public class ServerThread extends Thread {
                         System.out.println("Thread servidor " + this.threadId() + " :terminou para o utilizador " + username);
                         break;
                     }
-
 
                     if (Server.WINNER_USERNAME != null) {
                         if (!Server.WINNER_USERNAME.equals(username)) {
